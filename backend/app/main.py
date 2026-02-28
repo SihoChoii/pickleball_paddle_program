@@ -155,9 +155,9 @@ def health() -> dict[str, str]:
 def get_latest_imu() -> dict[str, Any]:
     table_name = _sql_identifier(INFLUX_MEASUREMENT)
     query = (
-        "SELECT time, x, y, z, roll, pitch, yaw "
-        f"FROM {table_name} ORDER BY time DESC LIMIT 1"
-    )
+    "SELECT time, x, y, z, roll, pitch, yaw "
+    f"FROM {table_name} ORDER BY time DESC LIMIT 2500"
+    )   
 
     arrow_table = _query_imu(query)
 

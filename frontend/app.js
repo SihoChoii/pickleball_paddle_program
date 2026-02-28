@@ -1,3 +1,5 @@
+import { initPaddle3D, updatePaddleIMU } from "./paddle-3d.js";
+
 const els = {
   status: document.querySelector("#status"),
   sampleTime: document.querySelector("#sample-time"),
@@ -21,17 +23,16 @@ const LATEST_POLL_MS = 250;
 const HISTORY_POLL_MS = 3000;
 const THROUGHPUT_POLL_MS = 1000;
 
-const throughputState = {
-  points: [],
-};
+const throughputState = { points: [] };
 
 function fmt(value) {
   return Number(value).toFixed(4);
 }
 
+// ─── Throughput Chart ────────────────────────────────────────────────────────
+
 function drawThroughputChart() {
   if (!els.throughputChart) return;
-
   const points = throughputState.points;
   const canvas = els.throughputChart;
   const ctx = canvas.getContext("2d");
@@ -41,12 +42,8 @@ function drawThroughputChart() {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, width, height);
 
-  const left = 42;
-  const right = width - 10;
-  const top = 12;
-  const bottom = height - 26;
-  const chartWidth = right - left;
-  const chartHeight = bottom - top;
+  const left = 42, right = width - 10, top = 12, bottom = height - 26;
+  const chartWidth = right - left, chartHeight = bottom - top;
 
   ctx.strokeStyle = "#d8e2ef";
   ctx.lineWidth = 1;
@@ -70,9 +67,7 @@ function drawThroughputChart() {
     ctx.moveTo(left, y);
     ctx.lineTo(right, y);
     ctx.stroke();
-
-    const label = Math.round(maxCount * (1 - i / gridSteps));
-    ctx.fillText(String(label), left - 6, y);
+    ctx.fillText(String(Math.round(maxCount * (1 - i / gridSteps))), left - 6, y);
   }
 
   if (!points.length) {
@@ -87,16 +82,11 @@ function drawThroughputChart() {
   ctx.lineWidth = 2;
   ctx.beginPath();
   points.forEach((point, i) => {
-    const x =
-      points.length === 1
-        ? left + chartWidth / 2
-        : left + (i / (points.length - 1)) * chartWidth;
+    const x = points.length === 1
+      ? left + chartWidth / 2
+      : left + (i / (points.length - 1)) * chartWidth;
     const y = bottom - (point.count / maxCount) * chartHeight;
-    if (i === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
-    }
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
   ctx.stroke();
 
@@ -117,25 +107,18 @@ function drawThroughputChart() {
   ctx.fillText("now", right, bottom + 6);
 }
 
+// ─── API Fetchers ─────────────────────────────────────────────────────────────
+
 async function fetchThroughput() {
   try {
     const res = await fetch(THROUGHPUT_API_URL);
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const payload = await res.json();
     throughputState.points = Array.isArray(payload.points) ? payload.points : [];
-
-    const latestComplete = Number(payload.latest_complete_dps ?? 0);
-    const avg = Number(payload.average_dps ?? 0);
-
-    els.dataRate.textContent = String(latestComplete);
-    els.dataRateAvg.textContent = avg.toFixed(2);
+    els.dataRate.textContent = String(Number(payload.latest_complete_dps ?? 0));
+    els.dataRateAvg.textContent = Number(payload.average_dps ?? 0).toFixed(2);
     drawThroughputChart();
-  } catch {
-    // Keep main data path live even when throughput endpoint fails.
-  }
+  } catch { /* keep live */ }
 }
 
 async function fetchLatestImu() {
@@ -143,12 +126,7 @@ async function fetchLatestImu() {
     const res = await fetch(LATEST_API_URL);
     if (!res.ok) {
       let detail = "";
-      try {
-        const errPayload = await res.json();
-        detail = errPayload?.detail ? ` - ${errPayload.detail}` : "";
-      } catch {
-        // ignore parse errors for non-json responses
-      }
+      try { const e = await res.json(); detail = e?.detail ? ` - ${e.detail}` : ""; } catch {}
       throw new Error(`HTTP ${res.status}${detail}`);
     }
 
@@ -163,9 +141,21 @@ async function fetchLatestImu() {
     els.gyroYaw.textContent = fmt(gyroscope.yaw);
 
     els.status.textContent = "Connected";
+    els.status.classList.add("connected");
     els.sampleTime.textContent = timestamp ?? "-";
+
+    // 🏓 Feed 3D paddle
+    updatePaddleIMU({
+      roll:  gyroscope.roll,
+      pitch: gyroscope.pitch,
+      yaw:   gyroscope.yaw,
+      x: acceleration.x,
+      y: acceleration.y,
+      z: acceleration.z,
+    });
   } catch (error) {
     els.status.textContent = `Waiting for IMU data (${error.message})`;
+    els.status.classList.remove("connected");
   }
 }
 
@@ -174,44 +164,35 @@ function renderHistory(entries) {
     els.historyBody.innerHTML = '<tr><td colspan="7">No data yet.</td></tr>';
     return;
   }
-
-  const rows = entries
-    .map(
-      (row) => `
-        <tr>
-          <td>${row.timestamp ?? "-"}</td>
-          <td>${fmt(row.x)}</td>
-          <td>${fmt(row.y)}</td>
-          <td>${fmt(row.z)}</td>
-          <td>${fmt(row.roll)}</td>
-          <td>${fmt(row.pitch)}</td>
-          <td>${fmt(row.yaw)}</td>
-        </tr>
-      `
-    )
-    .join("");
-
-  els.historyBody.innerHTML = rows;
+  els.historyBody.innerHTML = entries.map(
+    (row) => `<tr>
+      <td>${row.timestamp ?? "-"}</td>
+      <td>${fmt(row.x)}</td><td>${fmt(row.y)}</td><td>${fmt(row.z)}</td>
+      <td>${fmt(row.roll)}</td><td>${fmt(row.pitch)}</td><td>${fmt(row.yaw)}</td>
+    </tr>`
+  ).join("");
 }
 
 async function fetchAllImu() {
   try {
     const res = await fetch(ALL_API_URL);
-    if (!res.ok) {
-      return;
-    }
+    if (!res.ok) return;
     const payload = await res.json();
     els.historyCount.textContent = String(payload.count ?? 0);
     renderHistory(payload.entries ?? []);
-  } catch {
-    // Keep live data polling independent from history table errors.
-  }
+  } catch {}
 }
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 
 drawThroughputChart();
 fetchLatestImu();
 fetchAllImu();
 fetchThroughput();
+
+// Init 3D paddle
+initPaddle3D("#paddle-canvas");
+
 setInterval(fetchLatestImu, LATEST_POLL_MS);
 setInterval(fetchAllImu, HISTORY_POLL_MS);
 setInterval(fetchThroughput, THROUGHPUT_POLL_MS);

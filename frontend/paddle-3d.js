@@ -45,26 +45,26 @@ export async function initPaddle3D(canvasSelector) {
   // Subtle dark background gradient via a large sphere
   const bgGeo = new THREE.SphereGeometry(50, 16, 16);
   const bgMat = new THREE.MeshBasicMaterial({
-    color: 0x0a0e1a,
+    color: 0xe8ecf0,
     side: THREE.BackSide,
   });
   scene.add(new THREE.Mesh(bgGeo, bgMat));
 
   // Grid floor
-  const grid = new THREE.GridHelper(10, 20, 0x1a2540, 0x111827);
+  const grid = new THREE.GridHelper(10, 20, 0xb0bcc8, 0xd0d8e0);
   grid.position.y = -2.2;
   scene.add(grid);
 
   // --- Camera ---
   camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
-  camera.position.set(0, 1.5, 6);
-  camera.lookAt(0, 0, 0);
+  camera.position.set(0, 2.0, 9);
+  camera.lookAt(0, 1.4, 0);
 
   // --- Lights ---
-  const ambient = new THREE.AmbientLight(0xffffff, 0.3);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.7);
   scene.add(ambient);
 
-  const keyLight = new THREE.DirectionalLight(0x88ccff, 1.4);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
   keyLight.position.set(4, 8, 5);
   keyLight.castShadow = true;
   scene.add(keyLight);
@@ -92,7 +92,7 @@ export async function initPaddle3D(canvasSelector) {
   trailGeometry.setAttribute("position", new THREE.BufferAttribute(trailPositions, 3));
   trailGeometry.setDrawRange(0, 0);
   const trailMat = new THREE.LineBasicMaterial({
-    color: 0x00e5ff,
+    color: 0x0099bb,
     transparent: true,
     opacity: 0.55,
   });
@@ -229,8 +229,11 @@ function buildPaddle(group) {
     group.add(bar);
   }
 
-  // Paddle offset so rotation pivot is near handle center
-  group.position.y = 0.3;
+  // Shift all geometry up so the IMU cap (bottom of handle) becomes the pivot.
+  // Handle bottom sits at y ≈ -1.85 in local space; shifting by +1.85 puts it at origin.
+  group.children.forEach(child => { child.position.y += 1.85; });
+  // Lower the group itself so the paddle face stays roughly centred on screen
+  group.position.y = -1.4;
 }
 
 export function updatePaddleIMU({ roll, pitch, yaw, x, y, z }) {
@@ -264,7 +267,7 @@ export function updatePaddleIMU({ roll, pitch, yaw, x, y, z }) {
   lastUpdateTime = now;
 
   // Update trail — tip of paddle in world space
-  const tip = new THREE.Vector3(0, 1.8, 0);
+  const tip = new THREE.Vector3(0, 3.5, 0); // top of paddle face
   tip.applyQuaternion(currentQuat);
   trailPoints.push(tip.clone());
   if (trailPoints.length > TRAIL_MAX) trailPoints.shift();

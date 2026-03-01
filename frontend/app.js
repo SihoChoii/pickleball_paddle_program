@@ -25,6 +25,8 @@ const els = {
   replayPlayBtn: document.querySelector("#replay-play-btn"),
   replayCounter: document.querySelector("#replay-counter"),
   replaySpeed: document.querySelector("#replay-speed"),
+  // Hit overlay
+  hitOverlay: document.querySelector("#hit-overlay"),
 };
 
 // ─── API ──────────────────────────────────────────────────────────────────────
@@ -64,6 +66,10 @@ const replay = {
   timerId: null,
   speedMs: 25,      // default ~40fps, matches 40pts/s data rate
 };
+
+// Hit overlay visibility state
+let hitSustainFrames = 0;
+const HIT_SUSTAIN_MAX = 5;
 
 const throughputState = { points: [] };
 
@@ -199,8 +205,17 @@ function scrubToFrame(index) {
   // Drive 3D paddle
   updatePaddleIMU({
     roll: e.roll, pitch: e.pitch, yaw: e.yaw,
-    x: e.x, y: e.y, z: e.z
+    x: e.x, y: e.y, z: e.z, hit_flag: e.hit_flag ?? e.hit
   });
+
+  if (els.hitOverlay) {
+    if (e.hit_flag || e.hit) {
+      hitSustainFrames = HIT_SUSTAIN_MAX;
+    } else if (hitSustainFrames > 0) {
+      hitSustainFrames--;
+    }
+    els.hitOverlay.style.display = (hitSustainFrames > 0) ? "block" : "none";
+  }
 
   // // Highlight matching table row
   // const rows = els.historyBody.querySelectorAll("tr[data-ts]");
@@ -331,8 +346,17 @@ async function fetchLatestImu() {
 
     updatePaddleIMU({
       roll: gyroscope.roll, pitch: gyroscope.pitch, yaw: gyroscope.yaw,
-      x: acceleration.x, y: acceleration.y, z: acceleration.z
+      x: acceleration.x, y: acceleration.y, z: acceleration.z, hit_flag: payload.hit_flag ?? payload.hit
     });
+
+    if (els.hitOverlay) {
+      if (payload.hit_flag || payload.hit) {
+        hitSustainFrames = HIT_SUSTAIN_MAX;
+      } else if (hitSustainFrames > 0) {
+        hitSustainFrames--;
+      }
+      els.hitOverlay.style.display = (hitSustainFrames > 0) ? "block" : "none";
+    }
   } catch (err) {
     els.status.textContent = `Waiting for IMU data (${err.message})`;
     els.status.classList.remove("connected");
@@ -365,7 +389,7 @@ async function fetchAllImu() {
 
 function renderHistory(entries) {
   if (!entries.length) {
-    els.historyBody.innerHTML = '<tr><td colspan="7">No data yet.</td></tr>';
+    els.historyBody.innerHTML = '<tr><td colspan="8">No data yet.</td></tr>';
     return;
   }
   const inReplay = session.state === S.REPLAY;
@@ -378,6 +402,7 @@ function renderHistory(entries) {
       <td>${fmt(row.roll)}</td>
       <td>${fmt(row.pitch)}</td>
       <td>${fmt(row.yaw)}</td>
+      <td>${row.hit_flag ?? row.hit ?? 0}</td>
     </tr>`).join("");
 
   // Clicking a row during replay jumps the scrubber to that frame

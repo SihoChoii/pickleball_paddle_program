@@ -47,7 +47,7 @@ const API = {
   throughput: "/api/imu/throughput?window_seconds=60",
 };
 
-const LATEST_POLL_MS = 250;
+const LATEST_POLL_MS = 100;
 const HISTORY_POLL_MS = 3000;
 const THROUGHPUT_POLL_MS = 1000;
 const ACCEL_ROLLING_WINDOW_MS = 60_000;
@@ -199,7 +199,7 @@ function resetSessionAccelerationSeries() {
 
 function ingestAccelerationSample(payload) {
   const a = payload?.acceleration;
-  if (!a) return;
+  if (!a) return false;
 
   const sampleKey = payload.timestamp_ns != null
     ? `ns:${payload.timestamp_ns}`
@@ -235,7 +235,7 @@ function ingestAccelerationSample(payload) {
     && (payload.recent_hit ?? true)
   );
   const hit = directHit || latchedRecentHit;
-  if (directHit || latchedRecentHit) {
+  if (recentHitKey && (directHit || latchedRecentHit)) {
     accelChartState.lastRecentHitKey = recentHitKey;
   }
 

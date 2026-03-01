@@ -440,12 +440,24 @@ function drawAccelerationChart(series) {
   });
   ctx.stroke();
 
-  ctx.fillStyle = "#d63031";
   for (const point of series) {
     if (!point.hit) continue;
+    const x = mapX(point.tMs);
+    const y = mapY(point.smooth);
+    ctx.save();
+    ctx.shadowColor = "rgba(255, 45, 45, 0.95)";
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = "#ff3b30";
     ctx.beginPath();
-    ctx.arc(mapX(point.tMs), mapY(point.smooth), 3, 0, Math.PI * 2);
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(255, 245, 245, 0.95)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
   }
 
   const last = series[series.length - 1];

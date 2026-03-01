@@ -27,6 +27,7 @@ INFLUX_TOKEN       = os.getenv("INFLUX_TOKEN")
 INFLUX_DATABASE    = os.getenv("INFLUX_DATABASE") or os.getenv("INFLUX_BUCKET")
 INFLUX_MEASUREMENT = os.getenv("INFLUX_MEASUREMENT", "imu_data")
 EXPECTED_FIELDS    = {"x", "y", "z", "roll", "pitch", "yaw", "hit"}
+RECENT_HIT_WINDOW_SECONDS = 5
 
 app = FastAPI(title="IMU Influx Reader")
 app.add_middleware(
@@ -216,7 +217,7 @@ def get_latest_imu() -> dict[str, Any]:
         "SELECT time "
         f"FROM {table_name} "
         "WHERE hit = 1 "
-        "AND time >= now() - INTERVAL '2 second' "
+        f"AND time >= now() - INTERVAL '{RECENT_HIT_WINDOW_SECONDS} second' "
         "ORDER BY time DESC LIMIT 1"
     )
     try:

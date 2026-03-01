@@ -1,0 +1,38 @@
+{
+  "created_at_utc": "2026-03-01T05:26:02.525898+00:00",
+  "effective_from_ns": 1772342762525919000,
+  "metrics": {
+    "accel_magnitude_mean": 1.014578745918121,
+    "accel_magnitude_stddev": 0.0004997381793013772,
+    "accel_target": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 1.0
+    },
+    "gyro_angle_like": false,
+    "gyro_delta_abs_p95": {
+      "gx": 0.09999999999999998,
+      "gy": 0.0,
+      "gz": 0.0
+    },
+    "gyro_stddev": {
+      "gx": 0.049175033139239946,
+      "gy": 0.014034412104290394,
+      "gz": 0.0
+    },
+    "trim_ratio": 0.1
+  },
+  "offsets": {
+    "ax": 0,
+    "ay": 3,
+    "az": 15,
+    "gx": 3,
+    "gy": 1,
+    "gz": 1
+  },
+  "profile_signature": 1918327970,
+  "sample_count": 398,
+  "source": "backend_influx_window",
+  "version": 1,
+  "window_seconds": 8.0
+}

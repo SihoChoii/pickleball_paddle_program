@@ -76,6 +76,82 @@ h1 {
   margin-top: 20px;
 }
 
+.hit-card {
+  margin-top: 20px;
+}
+
+.calibration-card {
+  margin-top: 20px;
+}
+
+.calibration-steps {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.calibration-steps li {
+  margin-bottom: 4px;
+}
+
+.calibration-controls {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.calibration-controls button {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f8fbff;
+  color: var(--text);
+  font: inherit;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.calibration-controls button:hover:not(:disabled) {
+  border-color: #b7c8dc;
+  background: #f0f7ff;
+}
+
+.calibration-controls button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.calibration-countdown {
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 80px;
+}
+
+.calibration-status {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.calibration-status-info {
+  color: #1f3f63;
+  background: #f3f9ff;
+}
+
+.calibration-status-success {
+  color: #0f5132;
+  border-color: #b7e4c7;
+  background: #ebfff2;
+}
+
+.calibration-status-error {
+  color: #7a1f1f;
+  border-color: #efc2c2;
+  background: #fff1f1;
+}
+
 #throughput-chart {
   width: 100%;
   max-width: 100%;
@@ -87,6 +163,32 @@ h1 {
 
 .history-card {
   margin-top: 20px;
+}
+
+.history-controls {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 12px;
+}
+
+.history-controls button {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f8fbff;
+  color: var(--text);
+  font: inherit;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.history-controls button:hover:not(:disabled) {
+  border-color: #b7c8dc;
+  background: #f0f7ff;
+}
+
+.history-controls button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .table-wrap {

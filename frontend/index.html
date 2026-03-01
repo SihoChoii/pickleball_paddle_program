@@ -67,8 +67,11 @@
     <section class="card paddle-3d-card">
       <h2>Paddle Orientation — 3D View</h2>
       <p class="meta-inline">Accelerometer tilt + integrated gyroscope yaw</p>
-      <div class="paddle-canvas-wrap">
+      <div class="paddle-canvas-wrap" style="position: relative;">
         <canvas id="paddle-canvas"></canvas>
+        <div id="hit-overlay"
+          style="display: none; position: absolute; top: 10%; right: 10%; font-size: 3rem; color: #ff3b30; font-weight: 900; text-shadow: 0 4px 10px rgba(255,59,48,0.6); z-index: 10; pointer-events: none; transform: rotate(15deg);">
+          HIT !</div>
       </div>
 
       <!-- Replay bar: hidden until session ends -->
@@ -124,11 +127,12 @@
               <th>Roll °/s</th>
               <th>Pitch °/s</th>
               <th>Yaw °/s</th>
+              <th>Hit Flag</th>
             </tr>
           </thead>
           <tbody id="history-body">
             <tr>
-              <td colspan="7">No data yet.</td>
+              <td colspan="8">No data yet.</td>
             </tr>
           </tbody>
         </table>
@@ -136,7 +140,7 @@
     </section>
 
   </main>
-  <script src="/app.js?v=5" type="module"></script>
+  <script src="/app.js?v=8" type="module"></script>
 </body>
 
 </html>

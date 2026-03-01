@@ -25,7 +25,7 @@ INFLUX_URL         = os.getenv("INFLUX_URL")
 INFLUX_TOKEN       = os.getenv("INFLUX_TOKEN")
 INFLUX_DATABASE    = os.getenv("INFLUX_DATABASE") or os.getenv("INFLUX_BUCKET")
 INFLUX_MEASUREMENT = os.getenv("INFLUX_MEASUREMENT", "imu_data")
-EXPECTED_FIELDS    = {"x", "y", "z", "roll", "pitch", "yaw"}
+EXPECTED_FIELDS    = {"x", "y", "z", "roll", "pitch", "yaw", "hit"}
 
 app = FastAPI(title="IMU Influx Reader")
 app.add_middleware(
@@ -86,11 +86,17 @@ def _to_iso(value: Any) -> str | None:
     return str(value)
 
 
-def _read_arrow_scalar(table, column: str, row_index: int):
-    chunked = table.column(column)
-    scalar  = chunked[row_index]
+def _read_arrow_scalar(table, column: str, row_index: int, default: Any = 0):
     try:
-        return scalar.as_py()
+        chunked = table.column(column)
+    except Exception:
+        return default
+    scalar  = chunked[row_index]
+    if scalar is None or not getattr(scalar, "is_valid", True):
+        return default
+    try:
+        val = scalar.as_py()
+        return val if val is not None else default
     except ValueError:
         if hasattr(scalar, "value"):
             return scalar.value
@@ -160,6 +166,7 @@ def _arrow_to_entries(arrow_table) -> list[dict[str, Any]]:
             "roll":      float(_read_arrow_scalar(arrow_table, "roll", i)),
             "pitch":     float(_read_arrow_scalar(arrow_table, "pitch", i)),
             "yaw":       float(_read_arrow_scalar(arrow_table, "yaw", i)),
+            "hit_flag":  int(_read_arrow_scalar(arrow_table, "hit", i, default=0)),
         })
     return entries
 
@@ -175,15 +182,15 @@ def health() -> dict[str, str]:
 def get_latest_imu() -> dict[str, Any]:
     table_name = _sql_identifier(INFLUX_MEASUREMENT)
     query = (
-        "SELECT time, x, y, z, roll, pitch, yaw "
+        "SELECT time, x, y, z, roll, pitch, yaw, hit "
         f"FROM {table_name} ORDER BY time DESC LIMIT 1"
     )
     arrow_table = _query_imu(query)
     if getattr(arrow_table, "num_rows", 0) == 0:
         raise HTTPException(status_code=404, detail="No IMU data found")
 
-    row = {f: float(_read_arrow_scalar(arrow_table, f, 0))
-           for f in ["x", "y", "z", "roll", "pitch", "yaw"]}
+    row = {f: float(_read_arrow_scalar(arrow_table, f, 0, default=0.0))
+           for f in ["x", "y", "z", "roll", "pitch", "yaw", "hit"]}
     missing = sorted(EXPECTED_FIELDS - set(row))
     if missing:
         raise HTTPException(status_code=404,
@@ -192,6 +199,7 @@ def get_latest_imu() -> dict[str, Any]:
         "timestamp":    _read_arrow_time_iso(arrow_table, 0),
         "acceleration": {"x": row["x"], "y": row["y"], "z": row["z"]},
         "gyroscope":    {"roll": row["roll"], "pitch": row["pitch"], "yaw": row["yaw"]},
+        "hit_flag":     int(row.get("hit", 0)),
     }
 
 
@@ -200,7 +208,7 @@ def get_all_imu() -> dict[str, Any]:
     """Returns the most recent 3000 rows, newest-first."""
     table_name = _sql_identifier(INFLUX_MEASUREMENT)
     query = (
-        "SELECT time, x, y, z, roll, pitch, yaw "
+        "SELECT time, x, y, z, roll, pitch, yaw, hit "
         f"FROM {table_name} ORDER BY time DESC LIMIT 3000"
     )
     arrow_table = _query_imu(query)
@@ -232,7 +240,7 @@ def get_session_imu(
         where = f"time >= '{start_dt.isoformat()}'"
 
     query = (
-        "SELECT time, x, y, z, roll, pitch, yaw "
+        "SELECT time, x, y, z, roll, pitch, yaw, hit "
         f"FROM {table_name} "
         f"WHERE {where} "
         "ORDER BY time ASC"

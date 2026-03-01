@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IMU Test Frontend</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>IMU Live Data</h1>
+      <p id="status">Waiting for data...</p>
+      <section class="grid">
+        <article class="card">
+          <h2>Acceleration (g)</h2>
+          <ul>
+            <li>X: <span id="accel-x">-</span></li>
+            <li>Y: <span id="accel-y">-</span></li>
+            <li>Z: <span id="accel-z">-</span></li>
+          </ul>
+        </article>
+        <article class="card">
+          <h2>Gyroscope</h2>
+          <ul>
+            <li>Roll: <span id="gyro-roll">-</span></li>
+            <li>Pitch: <span id="gyro-pitch">-</span></li>
+            <li>Yaw: <span id="gyro-yaw">-</span></li>
+          </ul>
+        </article>
+      </section>
+      <p class="meta">Last sample timestamp: <span id="sample-time">-</span></p>
+      <section class="card calibration-card">
+        <h2>Upright IMU Calibration</h2>
+        <p class="meta-inline">
+          Place the paddle with the tip on the ground, bottom in the air (facing down), and perfectly upright.
+        </p>
+        <ol class="calibration-steps">
+          <li>Support the paddle upright with your two-box fixture.</li>
+          <li>Keep it fully still through the countdown and capture.</li>
+          <li>Start calibration and wait for completion.</li>
+        </ol>
+        <div class="calibration-controls">
+          <button id="calibration-start" type="button">Start Calibration</button>
+          <button id="calibration-apply" type="button">Apply Saved Calibration</button>
+          <span id="calibration-countdown" class="calibration-countdown">Idle</span>
+        </div>
+        <p class="meta-inline">
+          Last calibrated: <strong><span id="calibration-last">Never</span></strong>
+        </p>
+        <p id="calibration-status" class="calibration-status calibration-status-info">
+          Waiting for calibration status...
+        </p>
+      </section>
+      <section class="card throughput-card">
+        <h2>Datapoint Throughput</h2>
+        <p class="meta-inline">
+          Last complete second: <strong><span id="data-rate">0</span></strong> pts/s
+        </p>
+        <p class="meta-inline">
+          Rolling average: <strong><span id="data-rate-avg">0.00</span></strong> pts/s
+        </p>
+        <canvas id="throughput-chart" width="720" height="220"></canvas>
+      </section>
+      <section class="card hit-card">
+        <h2>Paddle Hit Summary</h2>
+        <p class="meta-inline">
+          Latest hit timestamp: <strong><span id="hit-latest-time">-</span></strong>
+        </p>
+        <p class="meta-inline">
+          Hits in last 60s: <strong><span id="hit-window-count">0</span></strong>
+        </p>
+        <p class="meta-inline">
+          Rolling hits/s: <strong><span id="hit-rate">0.0000</span></strong>
+        </p>
+      </section>
+      <section class="card history-card">
+        <h2>Recent IMU Entries (Debug)</h2>
+        <p class="meta">Rows shown: <span id="history-count">0</span></p>
+        <div class="history-controls">
+          <button id="history-show-more" type="button">Show More</button>
+          <button id="history-reset" type="button">Reset</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>X</th>
+                <th>Y</th>
+                <th>Z</th>
+                <th>Roll</th>
+                <th>Pitch</th>
+                <th>Yaw</th>
+              </tr>
+            </thead>
+            <tbody id="history-body">
+              <tr>
+                <td colspan="7">No data yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

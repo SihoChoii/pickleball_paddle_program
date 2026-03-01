@@ -15,6 +15,9 @@ frontend/
   app.js                 # Polls backend and prints IMU data
 ```
 
+Archived deprecated test frontend snapshot:
+- `archive/frontend-legacy-2026-03-01/`
+
 ## 1. Configure Environment
 
 Copy the template and fill in your Influx settings:

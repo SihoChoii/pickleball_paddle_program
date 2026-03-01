@@ -1,66 +1,68 @@
-import { initPaddle3D, updatePaddleIMU } from "./paddle-3d.js";
+import { initPaddle3D, updatePaddleIMU } from "./paddle-3d.js?v=5";
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 const els = {
-  status:          document.querySelector("#status"),
-  sampleTime:      document.querySelector("#sample-time"),
-  dataRate:        document.querySelector("#data-rate"),
-  dataRateAvg:     document.querySelector("#data-rate-avg"),
-  historyCount:    document.querySelector("#history-count"),
-  historyBody:     document.querySelector("#history-body"),
-  accelX:          document.querySelector("#accel-x"),
-  accelY:          document.querySelector("#accel-y"),
-  accelZ:          document.querySelector("#accel-z"),
-  gyroRoll:        document.querySelector("#gyro-roll"),
-  gyroPitch:       document.querySelector("#gyro-pitch"),
-  gyroYaw:         document.querySelector("#gyro-yaw"),
+  status: document.querySelector("#status"),
+  sampleTime: document.querySelector("#sample-time"),
+  dataRate: document.querySelector("#data-rate"),
+  dataRateAvg: document.querySelector("#data-rate-avg"),
+  historyCount: document.querySelector("#history-count"),
+  historyBody: document.querySelector("#history-body"),
+  accelX: document.querySelector("#accel-x"),
+  accelY: document.querySelector("#accel-y"),
+  accelZ: document.querySelector("#accel-z"),
+  gyroRoll: document.querySelector("#gyro-roll"),
+  gyroPitch: document.querySelector("#gyro-pitch"),
+  gyroYaw: document.querySelector("#gyro-yaw"),
   throughputChart: document.querySelector("#throughput-chart"),
   // Session
-  sessionBtn:      document.querySelector("#session-btn"),
-  sessionStatus:   document.querySelector("#session-status"),
+  sessionBtn: document.querySelector("#session-btn"),
+  sessionStatus: document.querySelector("#session-status"),
   // Replay
-  replayBar:       document.querySelector("#replay-bar"),
-  replayScrubber:  document.querySelector("#replay-scrubber"),
+  replayBar: document.querySelector("#replay-bar"),
+  replayScrubber: document.querySelector("#replay-scrubber"),
   replayTimestamp: document.querySelector("#replay-timestamp"),
-  replayPlayBtn:   document.querySelector("#replay-play-btn"),
-  replayCounter:   document.querySelector("#replay-counter"),
-  replaySpeed:     document.querySelector("#replay-speed"),
+  replayPlayBtn: document.querySelector("#replay-play-btn"),
+  replayCounter: document.querySelector("#replay-counter"),
+  replaySpeed: document.querySelector("#replay-speed"),
 };
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 const API = {
-  latest:     "/api/imu/latest",
-  all:        "/api/imu/all",
-  session:    "/api/imu/session",
+  latest: "/api/imu/latest",
+  all: "/api/imu/all",
+  session: "/api/imu/session",
   throughput: "/api/imu/throughput?window_seconds=60",
 };
 
-const LATEST_POLL_MS     = 250;
-const HISTORY_POLL_MS    = 3000;
+const LATEST_POLL_MS = 250;
+const HISTORY_POLL_MS = 3000;
 const THROUGHPUT_POLL_MS = 1000;
 
 // ─── Session state machine ────────────────────────────────────────────────────
 //  IDLE → [Start] → CONFIRMING → [first live point] → RECORDING
 //  RECORDING → [Stop] → LOADING → [fetch done] → REPLAY
 //  REPLAY → [Start] → IDLE → CONFIRMING → ...
-const S = { IDLE:"idle", CONFIRMING:"confirming", RECORDING:"recording",
-            LOADING:"loading", REPLAY:"replay" };
+const S = {
+  IDLE: "idle", CONFIRMING: "confirming", RECORDING: "recording",
+  LOADING: "loading", REPLAY: "replay"
+};
 
 const session = {
-  state:       S.IDLE,
-  startIso:    null,   // ISO of first confirmed data point
-  startNs:     null,   // ns int of first confirmed data point
-  endIso:      null,   // ISO wall-clock when Stop was clicked
-  lastSeenNs:  null,   // ns of most recent live point (used as end boundary)
-  entries:     [],     // full session data oldest-first (populated after stop)
+  state: S.IDLE,
+  startIso: null,   // ISO of first confirmed data point
+  startNs: null,   // ns int of first confirmed data point
+  endIso: null,   // ISO wall-clock when Stop was clicked
+  lastSeenNs: null,   // ns of most recent live point (used as end boundary)
+  entries: [],     // full session data oldest-first (populated after stop)
 };
 
 // ─── Replay state ─────────────────────────────────────────────────────────────
 const replay = {
-  index:      0,
-  playing:    false,
-  timerId:    null,
-  speedMs:    25,      // default ~40fps, matches 40pts/s data rate
+  index: 0,
+  playing: false,
+  timerId: null,
+  speedMs: 25,      // default ~40fps, matches 40pts/s data rate
 };
 
 const throughputState = { points: [] };
@@ -87,33 +89,35 @@ els.sessionBtn?.addEventListener("click", () => {
 });
 
 function startConfirming() {
-  Object.assign(session, { state: S.CONFIRMING, startIso: null, startNs: null,
-                            endIso: null, lastSeenNs: null, entries: [] });
+  Object.assign(session, {
+    state: S.CONFIRMING, startIso: null, startNs: null,
+    endIso: null, lastSeenNs: null, entries: []
+  });
   stopPlayback();
   hideReplayBar();
-  els.sessionBtn.textContent    = "Stop Session";
+  els.sessionBtn.textContent = "Stop Session";
   els.sessionBtn.classList.add("active");
-  els.sessionBtn.disabled       = false;
+  els.sessionBtn.disabled = false;
   els.sessionStatus.textContent = "Waiting for first data point…";
-  els.sessionStatus.className   = "session-status-text confirming";
+  els.sessionStatus.className = "session-status-text confirming";
 }
 
 function confirmRecording(iso, ns) {
-  session.state    = S.RECORDING;
+  session.state = S.RECORDING;
   session.startIso = iso;
-  session.startNs  = ns ?? null;
+  session.startNs = ns ?? null;
   els.sessionStatus.textContent = `● Recording  ${fmtWallTime(iso)}`;
-  els.sessionStatus.className   = "session-status-text recording";
+  els.sessionStatus.className = "session-status-text recording";
 }
 
 function stopSession() {
-  session.state  = S.LOADING;
+  session.state = S.LOADING;
   session.endIso = new Date().toISOString();
-  els.sessionBtn.textContent    = "Start Session";
+  els.sessionBtn.textContent = "Start Session";
   els.sessionBtn.classList.remove("active");
-  els.sessionBtn.disabled       = true;
+  els.sessionBtn.disabled = true;
   els.sessionStatus.textContent = "Loading session data…";
-  els.sessionStatus.className   = "session-status-text loading";
+  els.sessionStatus.className = "session-status-text loading";
   loadAndEnterReplay();
 }
 
@@ -122,13 +126,13 @@ async function loadAndEnterReplay() {
     session.state = S.IDLE;
     els.sessionBtn.disabled = false;
     els.sessionStatus.textContent = "No data recorded.";
-    els.sessionStatus.className   = "session-status-text";
+    els.sessionStatus.className = "session-status-text";
     return;
   }
 
   // Use ns timestamps when available so WHERE clause matches InfluxDB exactly
-  const startParam = session.startNs   ? String(session.startNs)  : session.startIso;
-  const endParam   = session.lastSeenNs ? String(session.lastSeenNs) : session.endIso;
+  const startParam = session.startNs ? String(session.startNs) : session.startIso;
+  const endParam = session.lastSeenNs ? String(session.lastSeenNs) : session.endIso;
   const url = `${API.session}?start=${encodeURIComponent(startParam)}&end=${encodeURIComponent(endParam)}`;
 
   try {
@@ -136,12 +140,12 @@ async function loadAndEnterReplay() {
     session.entries = (await res.json()).entries ?? [];
   } catch { session.entries = []; }
 
-  session.state           = S.REPLAY;
+  session.state = S.REPLAY;
   els.sessionBtn.disabled = false;
 
   if (!session.entries.length) {
     els.sessionStatus.textContent = "Session ended — 0 points found.";
-    els.sessionStatus.className   = "session-status-text";
+    els.sessionStatus.className = "session-status-text";
     return;
   }
 
@@ -160,10 +164,10 @@ async function loadAndEnterReplay() {
 // ─── Replay bar ───────────────────────────────────────────────────────────────
 
 function showReplayBar() {
-  els.replayBar.style.display   = "flex";
-  els.replayScrubber.min        = 0;
-  els.replayScrubber.max        = session.entries.length - 1;
-  els.replayScrubber.value      = 0;
+  els.replayBar.style.display = "flex";
+  els.replayScrubber.min = 0;
+  els.replayScrubber.max = session.entries.length - 1;
+  els.replayScrubber.value = 0;
   els.replayPlayBtn.textContent = "⏸";  // shows pause because auto-play starts
 }
 
@@ -178,23 +182,25 @@ function scrubToFrame(index) {
   replay.index = index;
 
   const e = session.entries[index];
-  els.replayScrubber.value        = index;
+  els.replayScrubber.value = index;
   els.replayTimestamp.textContent = fmtTs(e.timestamp);
-  els.replayCounter.textContent   =
+  els.replayCounter.textContent =
     `${(index + 1).toLocaleString()} / ${session.entries.length.toLocaleString()}`;
 
   // Drive sensor readouts with this frame's data
-  els.accelX.textContent     = fmt(e.x);
-  els.accelY.textContent     = fmt(e.y);
-  els.accelZ.textContent     = fmt(e.z);
-  els.gyroRoll.textContent   = fmt(e.roll);
-  els.gyroPitch.textContent  = fmt(e.pitch);
-  els.gyroYaw.textContent    = fmt(e.yaw);
+  els.accelX.textContent = fmt(e.x);
+  els.accelY.textContent = fmt(e.y);
+  els.accelZ.textContent = fmt(e.z);
+  els.gyroRoll.textContent = fmt(e.roll);
+  els.gyroPitch.textContent = fmt(e.pitch);
+  els.gyroYaw.textContent = fmt(e.yaw);
   els.sampleTime.textContent = fmtTs(e.timestamp);
 
   // Drive 3D paddle
-  updatePaddleIMU({ roll: e.roll, pitch: e.pitch, yaw: e.yaw,
-                    x: e.x, y: e.y, z: e.z });
+  updatePaddleIMU({
+    roll: e.roll, pitch: e.pitch, yaw: e.yaw,
+    x: e.x, y: e.y, z: e.z
+  });
 
   // // Highlight matching table row
   // const rows = els.historyBody.querySelectorAll("tr[data-ts]");
@@ -285,8 +291,8 @@ function drawThroughputChart(points, labelL, labelR) {
   ctx.beginPath(); ctx.arc(R, B - (last.count / max) * CH, 3.5, 0, Math.PI * 2); ctx.fill();
 
   ctx.fillStyle = "#4c5f79"; ctx.textBaseline = "top";
-  ctx.textAlign = "left";  ctx.fillText(labelL ?? "-60s", L, B + 6);
-  ctx.textAlign = "right"; ctx.fillText(labelR ?? "now",  R, B + 6);
+  ctx.textAlign = "left"; ctx.fillText(labelL ?? "-60s", L, B + 6);
+  ctx.textAlign = "right"; ctx.fillText(labelR ?? "now", R, B + 6);
 }
 
 // ─── Live fetchers ────────────────────────────────────────────────────────────
@@ -298,19 +304,19 @@ async function fetchLatestImu() {
   try {
     const res = await fetch(API.latest, { cache: "no-store" });
     if (!res.ok) {
-      let d = ""; try { const e = await res.json(); d = e?.detail ? ` - ${e.detail}` : ""; } catch {}
+      let d = ""; try { const e = await res.json(); d = e?.detail ? ` - ${e.detail}` : ""; } catch { }
       throw new Error(`HTTP ${res.status}${d}`);
     }
     const payload = await res.json();
     const { acceleration, gyroscope, timestamp } = payload;
 
-    els.accelX.textContent    = fmt(acceleration.x);
-    els.accelY.textContent    = fmt(acceleration.y);
-    els.accelZ.textContent    = fmt(acceleration.z);
-    els.gyroRoll.textContent  = fmt(gyroscope.roll);
+    els.accelX.textContent = fmt(acceleration.x);
+    els.accelY.textContent = fmt(acceleration.y);
+    els.accelZ.textContent = fmt(acceleration.z);
+    els.gyroRoll.textContent = fmt(gyroscope.roll);
     els.gyroPitch.textContent = fmt(gyroscope.pitch);
-    els.gyroYaw.textContent   = fmt(gyroscope.yaw);
-    els.status.textContent    = "Connected";
+    els.gyroYaw.textContent = fmt(gyroscope.yaw);
+    els.status.textContent = "Connected";
     els.status.classList.add("connected");
     els.sampleTime.textContent = fmtTs(timestamp);
 
@@ -323,8 +329,10 @@ async function fetchLatestImu() {
       session.lastSeenNs = payload.timestamp_ns;
     }
 
-    updatePaddleIMU({ roll: gyroscope.roll, pitch: gyroscope.pitch, yaw: gyroscope.yaw,
-                      x: acceleration.x,   y: acceleration.y,       z: acceleration.z });
+    updatePaddleIMU({
+      roll: gyroscope.roll, pitch: gyroscope.pitch, yaw: gyroscope.yaw,
+      x: acceleration.x, y: acceleration.y, z: acceleration.z
+    });
   } catch (err) {
     els.status.textContent = `Waiting for IMU data (${err.message})`;
     els.status.classList.remove("connected");
@@ -337,11 +345,11 @@ async function fetchThroughput() {
     const res = await fetch(API.throughput, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const p = await res.json();
-    throughputState.points      = Array.isArray(p.points) ? p.points : [];
-    els.dataRate.textContent    = String(Number(p.latest_complete_dps ?? 0));
+    throughputState.points = Array.isArray(p.points) ? p.points : [];
+    els.dataRate.textContent = String(Number(p.latest_complete_dps ?? 0));
     els.dataRateAvg.textContent = Number(p.average_dps ?? 0).toFixed(2);
     drawThroughputChart(throughputState.points);
-  } catch {}
+  } catch { }
 }
 
 async function fetchAllImu() {
@@ -352,7 +360,7 @@ async function fetchAllImu() {
     const p = await res.json();
     els.historyCount.textContent = String(p.count ?? 0);
     renderHistory(p.entries ?? []);
-  } catch {}
+  } catch { }
 }
 
 function renderHistory(entries) {
@@ -393,6 +401,6 @@ fetchAllImu();
 fetchThroughput();
 initPaddle3D("#paddle-canvas");
 
-setInterval(fetchLatestImu,  LATEST_POLL_MS);
-setInterval(fetchAllImu,     HISTORY_POLL_MS);
+setInterval(fetchLatestImu, LATEST_POLL_MS);
+setInterval(fetchAllImu, HISTORY_POLL_MS);
 setInterval(fetchThroughput, THROUGHPUT_POLL_MS);

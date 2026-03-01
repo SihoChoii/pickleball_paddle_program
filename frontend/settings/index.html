@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMU Settings</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+  <main class="container">
+    <div class="header-row">
+      <div class="header-left">
+        <h1>Settings</h1>
+        <nav class="top-nav" aria-label="Primary">
+          <a class="nav-tab" href="/">Dashboard</a>
+          <a class="nav-tab is-active" href="/settings/">Settings</a>
+        </nav>
+        <p class="meta settings-subtitle">Calibration controls for backend IMU rewrite mode.</p>
+      </div>
+    </div>
+
+    <section class="card calibration-card settings-calibration-card">
+      <h2>Upright IMU Calibration</h2>
+      <p class="meta-inline">
+        Place the paddle with the tip on the ground, bottom in the air (facing down), and perfectly upright.
+      </p>
+      <ol class="calibration-steps">
+        <li>Support the paddle upright with your two-box fixture.</li>
+        <li>Keep it fully still through the countdown and capture.</li>
+        <li>Start calibration and wait for completion.</li>
+      </ol>
+      <div class="calibration-controls">
+        <button id="calibration-start" type="button">Start Calibration</button>
+        <button id="calibration-apply" type="button">Apply Saved Calibration</button>
+        <span id="calibration-countdown" class="calibration-countdown">Idle</span>
+      </div>
+      <p class="meta-inline">
+        Last calibrated: <strong><span id="calibration-last">Never</span></strong>
+      </p>
+      <p id="calibration-status" class="calibration-status calibration-status-info">
+        Waiting for calibration status...
+      </p>
+    </section>
+  </main>
+
+  <script src="/settings/settings.js?v=1" type="module"></script>
+</body>
+
+</html>

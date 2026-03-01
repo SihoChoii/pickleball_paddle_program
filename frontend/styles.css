@@ -766,3 +766,136 @@ tbody tr.replay-active {
   white-space: nowrap;
   min-width: 130px;
 }
+
+/* ── Shared top nav ──────────────────────────────────────────────── */
+.top-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  background: var(--surface);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.nav-tab:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.nav-tab.is-active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.settings-subtitle {
+  margin: 0;
+}
+
+.settings-calibration-card {
+  max-width: 760px;
+}
+
+/* ── Calibration card ────────────────────────────────────────────── */
+.calibration-card {
+  margin-top: 10px;
+}
+
+.calibration-steps {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.calibration-steps li {
+  margin-bottom: 4px;
+}
+
+.calibration-controls {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.calibration-controls button {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text);
+  font: inherit;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.calibration-controls button:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: #eef4fb;
+}
+
+.calibration-controls button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.calibration-countdown {
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 92px;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.calibration-status {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.calibration-status-info {
+  color: #1f3f63;
+  background: #f3f9ff;
+}
+
+.calibration-status-success {
+  color: #0f5132;
+  border-color: #b7e4c7;
+  background: #ebfff2;
+}
+
+.calibration-status-error {
+  color: #7a1f1f;
+  border-color: #efc2c2;
+  background: #fff1f1;
+}
+
+@media (max-width: 500px) {
+  .top-nav {
+    margin-bottom: 8px;
+  }
+
+  .nav-tab {
+    height: 28px;
+    padding: 0 10px;
+  }
+}

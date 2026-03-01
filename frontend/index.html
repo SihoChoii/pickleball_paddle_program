@@ -111,6 +111,25 @@
       <canvas id="throughput-chart" width="720" height="200"></canvas>
     </section>
 
+    <!-- Hit detection summary -->
+    <section class="card hit-card">
+      <h2>Hit Detection</h2>
+      <div class="hit-stats">
+        <div class="hit-stat">
+          <span class="label">Hits in 60s</span>
+          <span class="value" id="hit-window-count">0</span>
+        </div>
+        <div class="hit-stat">
+          <span class="label">Rolling rate</span>
+          <span class="value"><span id="hit-rate">0.0000</span><span class="unit">hits/s</span></span>
+        </div>
+        <div class="hit-stat">
+          <span class="label">Latest hit time</span>
+          <span class="value small" id="hit-latest-time">-</span>
+        </div>
+      </div>
+    </section>
+
     <!-- History table -->
     <section class="card history-card">
       <div class="history-header">

@@ -8,7 +8,11 @@ constexpr uint32_t SAMPLE_INTERVAL_US = 16667;  // 60 Hz
 constexpr float ACC_SCALE = 1000.0f;            // g -> milli-g
 constexpr float GYRO_SCALE = 10.0f;             // dps -> deci-dps
 constexpr uint8_t PIEZO_PIN_A = 2;
-constexpr uint32_t PIEZO_DEBOUNCE_US = 10000;
+constexpr uint32_t PIEZO_DEBOUNCE_US = 25000;
+constexpr bool LOG_HIT_EVENTS = false;
+
+// Queue hit IRQ timestamps so rapid impacts are not collapsed into a single flag.
+constexpr uint8_t HIT_QUEUE_SIZE = 32;
 
 // Very aggressive batching to amortize per-RPC overhead on the host/router path.
 constexpr uint8_t BATCH_SAMPLES = 40;
@@ -16,8 +20,12 @@ constexpr uint32_t BATCH_FLUSH_MS = 700;
 constexpr size_t PAYLOAD_MAX = 4096;
 
 volatile uint32_t lastTrigA = 0;
-volatile uint32_t lastHitMicros = 0;
-volatile bool hitPending = false;
+volatile uint32_t hitQueue[HIT_QUEUE_SIZE];
+volatile uint8_t hitQueueHead = 0;
+volatile uint8_t hitQueueTail = 0;
+volatile uint8_t hitQueueCount = 0;
+volatile uint32_t hitIrqCount = 0;
+volatile uint32_t hitQueueOverflow = 0;
 
 struct ImuSample {
   int16_t ax;
@@ -41,8 +49,15 @@ void onPiezoHitA() {
   }
 
   lastTrigA = nowUs;
-  lastHitMicros = nowUs;
-  hitPending = true;
+  hitIrqCount++;
+
+  if (hitQueueCount < HIT_QUEUE_SIZE) {
+    hitQueue[hitQueueHead] = nowUs;
+    hitQueueHead = (hitQueueHead + 1) % HIT_QUEUE_SIZE;
+    hitQueueCount++;
+  } else {
+    hitQueueOverflow++;
+  }
 }
 
 bool flushBatch() {
@@ -109,6 +124,7 @@ void loop() {
   static uint32_t batchSentCount = 0;
   static uint32_t updateFailCount = 0;
   static uint32_t sampleSeq = 0;
+  static uint32_t hitTaggedCount = 0;
 
   const uint32_t nowUs = micros();
   if (nextSampleUs == 0) {
@@ -131,16 +147,20 @@ void loop() {
 
       uint32_t hitTsUs = 0;
       noInterrupts();
-      if (hitPending) {
-        hitPending = false;
-        hitTsUs = lastHitMicros;
+      if (hitQueueCount > 0) {
+        hitTsUs = hitQueue[hitQueueTail];
+        hitQueueTail = (hitQueueTail + 1) % HIT_QUEUE_SIZE;
+        hitQueueCount--;
         s.hit = 1;
       }
       interrupts();
 
       if (s.hit == 1) {
-        Serial.print("HIT: ");
-        Serial.println(hitTsUs / 1000000.0f, 3);
+        hitTaggedCount++;
+        if (LOG_HIT_EVENTS) {
+          Serial.print("HIT: ");
+          Serial.println(hitTsUs / 1000000.0f, 3);
+        }
       }
 
       batch[batchCount++] = s;
@@ -166,16 +186,36 @@ void loop() {
   }
 
   if ((nowMs - lastStatsMs) >= 1000) {
+    uint8_t queuedHits = 0;
+    uint32_t irqHits = 0;
+    uint32_t droppedHits = 0;
+    noInterrupts();
+    queuedHits = hitQueueCount;
+    irqHits = hitIrqCount;
+    droppedHits = hitQueueOverflow;
+    hitIrqCount = 0;
+    hitQueueOverflow = 0;
+    interrupts();
+
     Serial.print("stm samples/s=");
     Serial.print(sampleCount);
     Serial.print(" batches/s=");
     Serial.print(batchSentCount);
     Serial.print(" update_fail/s=");
-    Serial.println(updateFailCount);
+    Serial.print(updateFailCount);
+    Serial.print(" hit_irq/s=");
+    Serial.print(irqHits);
+    Serial.print(" hit_tagged/s=");
+    Serial.print(hitTaggedCount);
+    Serial.print(" hit_q=");
+    Serial.print(static_cast<unsigned>(queuedHits));
+    Serial.print(" hit_drop/s=");
+    Serial.println(droppedHits);
 
     sampleCount = 0;
     batchSentCount = 0;
     updateFailCount = 0;
+    hitTaggedCount = 0;
     lastStatsMs = nowMs;
   }
 }

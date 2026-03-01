@@ -6,6 +6,9 @@ const els = {
   sampleTime: document.querySelector("#sample-time"),
   dataRate: document.querySelector("#data-rate"),
   dataRateAvg: document.querySelector("#data-rate-avg"),
+  hitLatestTime: document.querySelector("#hit-latest-time"),
+  hitWindowCount: document.querySelector("#hit-window-count"),
+  hitRate: document.querySelector("#hit-rate"),
   historyCount: document.querySelector("#history-count"),
   historyBody: document.querySelector("#history-body"),
   accelX: document.querySelector("#accel-x"),
@@ -33,11 +36,13 @@ const API = {
   all: "/api/imu/all",
   session: "/api/imu/session",
   throughput: "/api/imu/throughput?window_seconds=60",
+  hitSummary: "/api/imu/hits/summary?window_seconds=60",
 };
 
 const LATEST_POLL_MS = 250;
 const HISTORY_POLL_MS = 3000;
 const THROUGHPUT_POLL_MS = 1000;
+const HIT_SUMMARY_POLL_MS = 1000;
 
 // ─── Session state machine ────────────────────────────────────────────────────
 //  IDLE → [Start] → CONFIRMING → [first live point] → RECORDING
@@ -352,6 +357,25 @@ async function fetchThroughput() {
   } catch { }
 }
 
+async function fetchHitSummary() {
+  if (session.state === S.LOADING) return;
+  try {
+    const res = await fetch(API.hitSummary, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const p = await res.json();
+
+    if (els.hitWindowCount) {
+      els.hitWindowCount.textContent = String(Number(p.hits_in_window ?? 0));
+    }
+    if (els.hitRate) {
+      els.hitRate.textContent = Number(p.rolling_hps ?? 0).toFixed(4);
+    }
+    if (els.hitLatestTime) {
+      els.hitLatestTime.textContent = p.latest_hit_timestamp ?? "-";
+    }
+  } catch { }
+}
+
 async function fetchAllImu() {
   if (session.state === S.LOADING) return;
   try {
@@ -399,8 +423,10 @@ drawThroughputChart([], "-60s", "now");
 fetchLatestImu();
 fetchAllImu();
 fetchThroughput();
+fetchHitSummary();
 initPaddle3D("#paddle-canvas");
 
 setInterval(fetchLatestImu, LATEST_POLL_MS);
 setInterval(fetchAllImu, HISTORY_POLL_MS);
 setInterval(fetchThroughput, THROUGHPUT_POLL_MS);
+setInterval(fetchHitSummary, HIT_SUMMARY_POLL_MS);

@@ -271,6 +271,55 @@ h2 {
   background: var(--surface-raised);
 }
 
+/* ── Hit stats ───────────────────────────────────── */
+
+.hit-card { margin-bottom: 14px; }
+
+.hit-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.hit-stat {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hit-stat .label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.hit-stat .value {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.1;
+}
+
+.hit-stat .value.small {
+  font-size: 0.76rem;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.hit-stat .unit {
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
 /* ── History table ───────────────────────────────── */
 
 .history-card { margin-bottom: 14px; }

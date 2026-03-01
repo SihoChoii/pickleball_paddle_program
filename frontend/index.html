@@ -1,138 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IMU Dashboard</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <main class="container">
 
-      <!-- Header row -->
-      <div class="header-row">
-        <div class="header-left">
-          <h1>IMU Dashboard</h1>
-          <p id="status">Waiting for data…</p>
-        </div>
-        <div class="session-controls">
-          <button id="session-btn">Start Session</button>
-          <span id="session-status" class="session-status-text">No session recorded</span>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMU Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+  <main class="container">
+
+    <!-- Header row -->
+    <div class="header-row">
+      <div class="header-left">
+        <h1>IMU Dashboard</h1>
+        <p id="status">Waiting for data…</p>
+      </div>
+      <div class="session-controls">
+        <button id="session-btn">Start Session</button>
+        <span id="session-status" class="session-status-text">No session recorded</span>
+      </div>
+    </div>
+
+    <!-- Sensor readings -->
+    <section class="grid">
+      <article class="card">
+        <h2>Acceleration</h2>
+        <ul>
+          <li>
+            <span class="axis-label"><span class="axis-badge x">X</span> X-axis</span>
+            <span class="val" id="accel-x">—</span>
+          </li>
+          <li>
+            <span class="axis-label"><span class="axis-badge y">Y</span> Y-axis</span>
+            <span class="val" id="accel-y">—</span>
+          </li>
+          <li>
+            <span class="axis-label"><span class="axis-badge z">Z</span> Z-axis</span>
+            <span class="val" id="accel-z">—</span>
+          </li>
+        </ul>
+      </article>
+      <article class="card">
+        <h2>Gyroscope</h2>
+        <ul>
+          <li>
+            <span class="axis-label"><span class="axis-badge r">R</span> Roll</span>
+            <span class="val" id="gyro-roll">—</span>
+          </li>
+          <li>
+            <span class="axis-label"><span class="axis-badge p">P</span> Pitch</span>
+            <span class="val" id="gyro-pitch">—</span>
+          </li>
+          <li>
+            <span class="axis-label"><span class="axis-badge w">Y</span> Yaw</span>
+            <span class="val" id="gyro-yaw">—</span>
+          </li>
+        </ul>
+      </article>
+    </section>
+
+    <p class="meta">Last sample: <span id="sample-time">—</span></p>
+
+    <!-- 3D Paddle + Replay bar -->
+    <section class="card paddle-3d-card">
+      <h2>Paddle Orientation — 3D View</h2>
+      <p class="meta-inline">Accelerometer tilt + integrated gyroscope yaw</p>
+      <div class="paddle-canvas-wrap">
+        <canvas id="paddle-canvas"></canvas>
       </div>
 
-      <!-- Sensor readings -->
-      <section class="grid">
-        <article class="card">
-          <h2>Acceleration</h2>
-          <ul>
-            <li>
-              <span class="axis-label"><span class="axis-badge x">X</span> X-axis</span>
-              <span class="val" id="accel-x">—</span>
-            </li>
-            <li>
-              <span class="axis-label"><span class="axis-badge y">Y</span> Y-axis</span>
-              <span class="val" id="accel-y">—</span>
-            </li>
-            <li>
-              <span class="axis-label"><span class="axis-badge z">Z</span> Z-axis</span>
-              <span class="val" id="accel-z">—</span>
-            </li>
-          </ul>
-        </article>
-        <article class="card">
-          <h2>Gyroscope</h2>
-          <ul>
-            <li>
-              <span class="axis-label"><span class="axis-badge r">R</span> Roll</span>
-              <span class="val" id="gyro-roll">—</span>
-            </li>
-            <li>
-              <span class="axis-label"><span class="axis-badge p">P</span> Pitch</span>
-              <span class="val" id="gyro-pitch">—</span>
-            </li>
-            <li>
-              <span class="axis-label"><span class="axis-badge w">Y</span> Yaw</span>
-              <span class="val" id="gyro-yaw">—</span>
-            </li>
-          </ul>
-        </article>
-      </section>
-
-      <p class="meta">Last sample: <span id="sample-time">—</span></p>
-
-      <!-- 3D Paddle + Replay bar -->
-      <section class="card paddle-3d-card">
-        <h2>Paddle Orientation — 3D View</h2>
-        <p class="meta-inline">Accelerometer tilt + integrated gyroscope yaw</p>
-        <div class="paddle-canvas-wrap">
-          <canvas id="paddle-canvas"></canvas>
-        </div>
-
-        <!-- Replay bar: hidden until session ends -->
-        <div id="replay-bar" class="replay-bar" style="display:none;">
-          <button id="replay-play-btn" class="replay-play-btn">▶</button>
-          <div class="replay-scrubber-wrap">
-            <input id="replay-scrubber" type="range" min="0" max="100" value="0"
-                   class="replay-scrubber" />
-            <div class="replay-meta">
-              <span id="replay-timestamp" class="replay-timestamp">—</span>
-              <div class="replay-right">
-                <select id="replay-speed" class="replay-speed-select">
-                  <option value="fast">Fast (10ms)</option>
-                  <option value="normal" selected>Normal (25ms)</option>
-                  <option value="slow">Slow (100ms)</option>
-                </select>
-                <span id="replay-counter" class="replay-counter">0 / 0</span>
-              </div>
+      <!-- Replay bar: hidden until session ends -->
+      <div id="replay-bar" class="replay-bar" style="display:none;">
+        <button id="replay-play-btn" class="replay-play-btn">▶</button>
+        <div class="replay-scrubber-wrap">
+          <input id="replay-scrubber" type="range" min="0" max="100" value="0" class="replay-scrubber" />
+          <div class="replay-meta">
+            <span id="replay-timestamp" class="replay-timestamp">—</span>
+            <div class="replay-right">
+              <select id="replay-speed" class="replay-speed-select">
+                <option value="fast">Fast (10ms)</option>
+                <option value="normal" selected>Normal (25ms)</option>
+                <option value="slow">Slow (100ms)</option>
+              </select>
+              <span id="replay-counter" class="replay-counter">0 / 0</span>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- Throughput -->
-      <section class="card throughput-card">
-        <h2>Datapoint Throughput</h2>
-        <div class="throughput-stats">
-          <div class="throughput-stat">
-            <span class="label">Last complete second</span>
-            <span class="value"><span id="data-rate">0</span><span class="unit">pts/s</span></span>
-          </div>
-          <div class="throughput-stat">
-            <span class="label">Rolling average</span>
-            <span class="value"><span id="data-rate-avg">0.00</span><span class="unit">pts/s</span></span>
-          </div>
+    <!-- Throughput -->
+    <section class="card throughput-card">
+      <h2>Datapoint Throughput</h2>
+      <div class="throughput-stats">
+        <div class="throughput-stat">
+          <span class="label">Last complete second</span>
+          <span class="value"><span id="data-rate">0</span><span class="unit">pts/s</span></span>
         </div>
-        <canvas id="throughput-chart" width="720" height="200"></canvas>
-      </section>
+        <div class="throughput-stat">
+          <span class="label">Rolling average</span>
+          <span class="value"><span id="data-rate-avg">0.00</span><span class="unit">pts/s</span></span>
+        </div>
+      </div>
+      <canvas id="throughput-chart" width="720" height="200"></canvas>
+    </section>
 
-      <!-- History table -->
-      <section class="card history-card">
-        <div class="history-header">
-          <h2>IMU Entries</h2>
-          <span class="row-count-badge"><span id="history-count">0</span> rows</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Timestamp</th>
-                <th>X (g)</th>
-                <th>Y (g)</th>
-                <th>Z (g)</th>
-                <th>Roll °/s</th>
-                <th>Pitch °/s</th>
-                <th>Yaw °/s</th>
-              </tr>
-            </thead>
-            <tbody id="history-body">
-              <tr><td colspan="7">No data yet.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+    <!-- History table -->
+    <section class="card history-card">
+      <div class="history-header">
+        <h2>IMU Entries</h2>
+        <span class="row-count-badge"><span id="history-count">0</span> rows</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>X (g)</th>
+              <th>Y (g)</th>
+              <th>Z (g)</th>
+              <th>Roll °/s</th>
+              <th>Pitch °/s</th>
+              <th>Yaw °/s</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr>
+              <td colspan="7">No data yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-    </main>
-    <script src="/app.js" type="module"></script>
-  </body>
+  </main>
+  <script src="/app.js?v=5" type="module"></script>
+</body>
+
 </html>

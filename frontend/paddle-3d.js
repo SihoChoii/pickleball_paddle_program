@@ -244,7 +244,7 @@ export function updatePaddleIMU({ roll, pitch, yaw, x, y, z }) {
       integratedPitch += (pitch * Math.PI / 180) * dt;
       integratedYaw += (yaw * Math.PI / 180) * dt;
     }
-    const euler = new THREE.Euler(integratedPitch, integratedYaw, integratedRoll + Math.PI, "YXZ");
+    const euler = new THREE.Euler(integratedPitch - Math.PI / 2, integratedYaw, integratedRoll + Math.PI, "YXZ");
     targetQuat.setFromEuler(euler);
   } else {
     // Direct accel tilt estimation (stable at rest, responsive)
@@ -255,7 +255,7 @@ export function updatePaddleIMU({ roll, pitch, yaw, x, y, z }) {
     const rollA = Math.atan2(ay, az);
     // Blend in yaw from gyro accumulation (no magnetometer = drift ok for demo)
     integratedYaw += (yaw * Math.PI / 180) * 0.016;
-    const euler = new THREE.Euler(pitchA, integratedYaw, rollA + Math.PI, "YXZ");
+    const euler = new THREE.Euler(pitchA - Math.PI / 2, integratedYaw, rollA + Math.PI, "YXZ");
     targetQuat.setFromEuler(euler);
   }
 

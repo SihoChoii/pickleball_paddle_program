@@ -50,15 +50,10 @@ export async function initPaddle3D(canvasSelector) {
   });
   scene.add(new THREE.Mesh(bgGeo, bgMat));
 
-  // Grid floor
-  const grid = new THREE.GridHelper(10, 20, 0xb0bcc8, 0xd0d8e0);
-  grid.position.y = -2.2;
-  scene.add(grid);
-
   // --- Camera ---
   camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
-  camera.position.set(0, 2.0, 9);
-  camera.lookAt(0, 1.4, 0);
+  camera.position.set(0, -1.5, 10);
+  camera.lookAt(0, -1.5, 0);
 
   // --- Lights ---
   const ambient = new THREE.AmbientLight(0xffffff, 0.7);
@@ -245,11 +240,11 @@ export function updatePaddleIMU({ roll, pitch, yaw, x, y, z }) {
     // Integrate gyro (deg/s) over delta time
     if (lastUpdateTime !== null) {
       const dt = (now - lastUpdateTime) / 1000; // seconds
-      integratedRoll  += (roll  * Math.PI / 180) * dt;
+      integratedRoll += (roll * Math.PI / 180) * dt;
       integratedPitch += (pitch * Math.PI / 180) * dt;
-      integratedYaw   += (yaw   * Math.PI / 180) * dt;
+      integratedYaw += (yaw * Math.PI / 180) * dt;
     }
-    const euler = new THREE.Euler(integratedPitch, integratedYaw, integratedRoll, "YXZ");
+    const euler = new THREE.Euler(integratedPitch, integratedYaw, integratedRoll + Math.PI, "YXZ");
     targetQuat.setFromEuler(euler);
   } else {
     // Direct accel tilt estimation (stable at rest, responsive)
@@ -257,10 +252,10 @@ export function updatePaddleIMU({ roll, pitch, yaw, x, y, z }) {
     const ay = Math.max(-1, Math.min(1, y));
     const az = Math.max(-1, Math.min(1, z));
     const pitchA = Math.asin(-ax);
-    const rollA  = Math.atan2(ay, az);
+    const rollA = Math.atan2(ay, az);
     // Blend in yaw from gyro accumulation (no magnetometer = drift ok for demo)
     integratedYaw += (yaw * Math.PI / 180) * 0.016;
-    const euler = new THREE.Euler(pitchA, integratedYaw, rollA, "YXZ");
+    const euler = new THREE.Euler(pitchA, integratedYaw, rollA + Math.PI, "YXZ");
     targetQuat.setFromEuler(euler);
   }
 

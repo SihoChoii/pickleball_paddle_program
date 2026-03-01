@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Session Review | Pickleball</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+  <header class="site-nav-wrap">
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a class="site-nav-brand" href="/">Pickleball Paddle Program</a>
+      <div class="site-nav-links">
+        <a class="site-nav-link" href="/">Welcome</a>
+        <a class="site-nav-link" href="/index.html">Live Dashboard</a>
+        <a class="site-nav-link" href="/sessions.html">Saved Sessions</a>
+        <a class="site-nav-link is-active" href="/session-review.html" aria-current="page">Session Review</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="session-review-page">
+    <section class="session-review-shell card" aria-labelledby="review-title">
+      <div class="session-review-head">
+        <div>
+          <h1 id="review-title">Session Review</h1>
+          <p id="review-subtitle" class="session-review-subtitle">Loading session details...</p>
+        </div>
+      </div>
+
+      <div id="review-state" class="session-review-state" data-state="loading">Loading session data...</div>
+      <button id="review-retry-btn" class="session-review-retry" type="button" hidden>Retry</button>
+    </section>
+
+    <section id="review-metrics" class="session-review-metrics" hidden aria-label="Session summary metrics"></section>
+
+    <section id="review-replay" class="session-review-replay card" hidden aria-label="Session replay">
+      <div class="session-review-panel-head">
+        <h2>Session Replay</h2>
+        <span id="review-frame-stamp" class="session-review-frame-stamp">Frame 0</span>
+      </div>
+
+      <div class="session-review-live-grid">
+        <article class="card session-review-mini-card">
+          <h3>Acceleration</h3>
+          <ul>
+            <li><span>X</span><span id="review-accel-x">—</span></li>
+            <li><span>Y</span><span id="review-accel-y">—</span></li>
+            <li><span>Z</span><span id="review-accel-z">—</span></li>
+          </ul>
+        </article>
+        <article class="card session-review-mini-card">
+          <h3>Gyroscope</h3>
+          <ul>
+            <li><span>Roll</span><span id="review-gyro-roll">—</span></li>
+            <li><span>Pitch</span><span id="review-gyro-pitch">—</span></li>
+            <li><span>Yaw</span><span id="review-gyro-yaw">—</span></li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="session-review-paddle-wrap" style="position: relative;">
+        <canvas id="review-paddle-canvas"></canvas>
+        <div
+          id="review-hit-overlay"
+          class="session-review-hit"
+          style="display: none;"
+        >
+          HIT !
+        </div>
+      </div>
+
+      <div id="review-replay-bar" class="replay-bar review-replay-bar">
+        <button id="review-play-btn" class="replay-play-btn" type="button" aria-label="Play session replay">▶</button>
+        <div class="replay-scrubber-wrap">
+          <input id="review-scrubber" type="range" min="0" max="100" value="0" class="replay-scrubber" />
+          <div class="replay-meta">
+            <span id="review-timestamp" class="replay-timestamp">—</span>
+            <div class="replay-right">
+              <select id="review-speed" class="replay-speed-select" aria-label="Replay speed">
+                <option value="fast">Fast (10ms)</option>
+                <option value="normal" selected>Normal (25ms)</option>
+                <option value="slow">Slow (100ms)</option>
+              </select>
+              <span id="review-counter" class="replay-counter">0 / 0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="session-review-chart card" hidden>
+      <div class="session-review-panel-head">
+        <h2>Acceleration Graph</h2>
+        <span id="review-accel-current" class="session-review-current">Current: — g</span>
+      </div>
+      <canvas id="review-accel-chart" width="720" height="220"></canvas>
+    </section>
+
+    <section id="review-table-shell" class="session-review-table card" hidden>
+      <div class="session-review-panel-head">
+        <h2>Raw Datapoints</h2>
+        <button
+          id="review-table-toggle"
+          class="session-review-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="review-table-region"
+        >
+          Show Raw Datapoints (0)
+        </button>
+      </div>
+
+      <div id="review-table-region" class="session-review-table-region" hidden>
+        <div class="table-wrap session-review-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>X (g)</th>
+                <th>Y (g)</th>
+                <th>Z (g)</th>
+                <th>Roll °/s</th>
+                <th>Pitch °/s</th>
+                <th>Yaw °/s</th>
+                <th>Hit Flag</th>
+              </tr>
+            </thead>
+            <tbody id="review-table-body">
+              <tr>
+                <td colspan="8">Table collapsed.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/session-review.js" type="module"></script>
+</body>
+
+</html>

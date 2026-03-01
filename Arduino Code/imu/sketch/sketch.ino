@@ -4,7 +4,7 @@
 
 ModulinoMovement movement;
 
-constexpr uint32_t SAMPLE_INTERVAL_US = 16667;  // 60 Hz
+constexpr uint32_t SAMPLE_INTERVAL_US = 33333;  // 30 Hz
 constexpr float ACC_SCALE = 1000.0f;            // g -> milli-g
 constexpr float GYRO_SCALE = 10.0f;             // dps -> deci-dps
 constexpr uint8_t PIEZO_PIN_A = 2;

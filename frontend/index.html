@@ -9,6 +9,17 @@
 </head>
 
 <body>
+  <header class="site-nav-wrap">
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a class="site-nav-brand" href="/">Pickleball Paddle Program</a>
+      <div class="site-nav-links">
+        <a class="site-nav-link" href="/">Welcome</a>
+        <a class="site-nav-link is-active" href="/index.html" aria-current="page">Live Dashboard</a>
+        <a class="site-nav-link" href="/sessions.html">Saved Sessions</a>
+      </div>
+    </nav>
+  </header>
+
   <main class="container">
 
     <!-- Header row -->
@@ -22,6 +33,17 @@
         <span id="session-status" class="session-status-text">No session recorded</span>
       </div>
     </div>
+
+    <section id="session-review-prompt" class="session-review-prompt card" hidden aria-live="polite">
+      <div class="session-review-prompt-copy">
+        <p class="session-review-prompt-title">Session complete</p>
+        <p id="session-review-summary" class="session-review-prompt-summary">Ready to review.</p>
+      </div>
+      <div class="session-review-prompt-actions">
+        <a id="session-review-link" class="session-review-link" href="/session-review.html">Review Session</a>
+        <button id="session-review-dismiss" class="session-review-dismiss" type="button">Dismiss</button>
+      </div>
+    </section>
 
     <!-- Sensor readings -->
     <section class="grid">
@@ -67,8 +89,22 @@
     <section class="card paddle-3d-card">
       <h2>Paddle Orientation — 3D View</h2>
       <p class="meta-inline">Accelerometer tilt + integrated gyroscope yaw</p>
-      <div class="paddle-canvas-wrap">
+      <div class="paddle-canvas-wrap" style="position: relative;">
         <canvas id="paddle-canvas"></canvas>
+        <div id="hit-overlay"
+          style="display: none; position: absolute; top: 10%; right: 10%; font-size: 3rem; color: #ff3b30; font-weight: 900; text-shadow: 0 4px 10px rgba(255,59,48,0.6); z-index: 10; pointer-events: none; transform: rotate(15deg);">
+          HIT !</div>
+      </div>
+
+      <div class="accel-chart-block">
+        <div class="accel-chart-header">
+          <span class="accel-chart-title">Change in Acceleration (Δ|a|)</span>
+          <div class="accel-chart-meta">
+            <span id="accel-mode" class="accel-mode-badge">Rolling · 60s</span>
+            <span id="accel-current" class="accel-current-value">Current: — Δg</span>
+          </div>
+        </div>
+        <canvas id="accel-chart" width="720" height="200"></canvas>
       </div>
 
       <!-- Replay bar: hidden until session ends -->
@@ -92,19 +128,33 @@
     </section>
 
     <!-- Throughput -->
-    <section class="card throughput-card">
-      <h2>Datapoint Throughput</h2>
-      <div class="throughput-stats">
-        <div class="throughput-stat">
-          <span class="label">Last complete second</span>
-          <span class="value"><span id="data-rate">0</span><span class="unit">pts/s</span></span>
-        </div>
-        <div class="throughput-stat">
-          <span class="label">Rolling average</span>
-          <span class="value"><span id="data-rate-avg">0.00</span><span class="unit">pts/s</span></span>
-        </div>
+    <section class="card throughput-card" id="throughput-card">
+      <div class="throughput-header">
+        <h2>Datapoint Throughput</h2>
+        <button
+          id="throughput-toggle"
+          class="throughput-toggle"
+          type="button"
+          aria-expanded="true"
+          aria-controls="throughput-content"
+          aria-label="Collapse Datapoint Throughput"
+        >
+          Collapse
+        </button>
       </div>
-      <canvas id="throughput-chart" width="720" height="200"></canvas>
+      <div id="throughput-content" class="throughput-content">
+        <div class="throughput-stats">
+          <div class="throughput-stat">
+            <span class="label">Last complete second</span>
+            <span class="value"><span id="data-rate">0</span><span class="unit">pts/s</span></span>
+          </div>
+          <div class="throughput-stat">
+            <span class="label">Rolling average</span>
+            <span class="value"><span id="data-rate-avg">0.00</span><span class="unit">pts/s</span></span>
+          </div>
+        </div>
+        <canvas id="throughput-chart" width="720" height="200"></canvas>
+      </div>
     </section>
 
     <!-- History table -->
@@ -124,11 +174,12 @@
               <th>Roll °/s</th>
               <th>Pitch °/s</th>
               <th>Yaw °/s</th>
+              <th>Hit Flag</th>
             </tr>
           </thead>
           <tbody id="history-body">
             <tr>
-              <td colspan="7">No data yet.</td>
+              <td colspan="8">No data yet.</td>
             </tr>
           </tbody>
         </table>
@@ -136,7 +187,7 @@
     </section>
 
   </main>
-  <script src="/app.js?v=5" type="module"></script>
+  <script src="/app.js?v=9" type="module"></script>
 </body>
 
 </html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saved Sessions | Pickleball</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+  <header class="site-nav-wrap">
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a class="site-nav-brand" href="/">Pickleball Paddle Program</a>
+      <div class="site-nav-links">
+        <a class="site-nav-link" href="/">Welcome</a>
+        <a class="site-nav-link" href="/index.html">Live Dashboard</a>
+        <a class="site-nav-link is-active" href="/sessions.html" aria-current="page">Saved Sessions</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="sessions-page">
+    <section class="sessions-shell card" aria-labelledby="sessions-title">
+      <div class="sessions-head">
+        <div>
+          <h1 id="sessions-title">Saved Sessions</h1>
+          <p class="sessions-subtitle">Browse all persisted session summaries.</p>
+        </div>
+      </div>
+
+      <div id="sessions-warning" class="sessions-warning" hidden></div>
+
+      <div class="sessions-toolbar">
+        <span class="sessions-count-badge"><span id="sessions-count">0</span> sessions</span>
+        <label class="sessions-sort" for="sessions-sort">
+          Sort by
+          <select id="sessions-sort" name="sessions-sort">
+            <option value="newest" selected>Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="longest">Longest</option>
+            <option value="shortest">Shortest</option>
+            <option value="most_points">Most points</option>
+            <option value="fewest_points">Fewest points</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="sessions-empty" class="sessions-empty" hidden>No saved sessions yet.</div>
+
+      <div class="sessions-table-wrap" id="sessions-table-wrap">
+        <table class="sessions-table">
+          <thead>
+            <tr>
+              <th>Started</th>
+              <th>Ended</th>
+              <th>Duration</th>
+              <th>Points</th>
+              <th>Saved At</th>
+              <th>Review</th>
+            </tr>
+          </thead>
+          <tbody id="sessions-body">
+            <tr>
+              <td colspan="6">Loading sessions...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/sessions.js" type="module"></script>
+</body>
+
+</html>

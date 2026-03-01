@@ -8,6 +8,7 @@ from typing import Any
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from influxdb_client_3 import InfluxDBClient3
 from influxdb_client_3.exceptions import InfluxDB3ClientQueryError
@@ -138,6 +139,17 @@ def _raw_time_to_datetime_utc(raw: Any) -> datetime | None:
     return None
 
 
+def _raw_time_to_epoch_ns(raw: Any) -> int | None:
+    if raw is None:
+        return None
+    if isinstance(raw, int):
+        return raw
+    dt = _raw_time_to_datetime_utc(raw)
+    if dt is None:
+        return None
+    return int(dt.timestamp() * 1_000_000_000)
+
+
 def _query_imu(query: str):
     try:
         return get_client().query(query=query, language="sql")
@@ -195,11 +207,33 @@ def get_latest_imu() -> dict[str, Any]:
     if missing:
         raise HTTPException(status_code=404,
                             detail=f"Missing fields: {', '.join(missing)}")
+
+    raw_time = _read_arrow_scalar(arrow_table, "time", 0, default=None)
+    timestamp_ns = _raw_time_to_epoch_ns(raw_time)
+
+    recent_hit_timestamp = None
+    recent_hit_query = (
+        "SELECT time "
+        f"FROM {table_name} "
+        "WHERE hit = 1 "
+        "AND time >= now() - INTERVAL '2 second' "
+        "ORDER BY time DESC LIMIT 1"
+    )
+    try:
+        recent_hit_table = _query_imu(recent_hit_query)
+        if getattr(recent_hit_table, "num_rows", 0) > 0:
+            recent_hit_timestamp = _read_arrow_time_iso(recent_hit_table, 0)
+    except HTTPException:
+        recent_hit_timestamp = None
+
     return {
         "timestamp":    _read_arrow_time_iso(arrow_table, 0),
+        "timestamp_ns": timestamp_ns,
         "acceleration": {"x": row["x"], "y": row["y"], "z": row["z"]},
         "gyroscope":    {"roll": row["roll"], "pitch": row["pitch"], "yaw": row["yaw"]},
         "hit_flag":     int(row.get("hit", 0)),
+        "recent_hit": bool(recent_hit_timestamp),
+        "recent_hit_timestamp": recent_hit_timestamp,
     }
 
 
@@ -302,6 +336,11 @@ def shutdown() -> None:
     if _client is not None:
         _client.close()
         _client = None
+
+
+@app.get("/", include_in_schema=False)
+def serve_welcome() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "welcome.html")
 
 
 app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")

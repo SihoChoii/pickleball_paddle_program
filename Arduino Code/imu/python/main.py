@@ -42,16 +42,17 @@ write_mode = "v3"
 
 
 def _encode_line(sample):
-    ax, ay, az, gx, gy, gz, ts_ns = sample
+    ax, ay, az, gx, gy, gz, ts_ns, hit = sample
     x = float(ax) / ACC_SCALE
     y = float(ay) / ACC_SCALE
     z = float(az) / ACC_SCALE
     roll = float(gx) / GYRO_SCALE
     pitch = float(gy) / GYRO_SCALE
     yaw = float(gz) / GYRO_SCALE
+    hit_flag = 1 if int(hit) != 0 else 0
     return (
         f"{INFLUX_MEASUREMENT},device=arduino_uno_q "
-        f"x={x:.6f},y={y:.6f},z={z:.6f},roll={roll:.6f},pitch={pitch:.6f},yaw={yaw:.6f} {ts_ns}"
+        f"x={x:.6f},y={y:.6f},z={z:.6f},roll={roll:.6f},pitch={pitch:.6f},yaw={yaw:.6f},hit={hit_flag}i {ts_ns}"
     )
 
 
@@ -222,7 +223,7 @@ def record_sensor_movement(ax, ay, az, gx, gy, gz):
     global callback_count, failed_count
 
     try:
-        a, b, c, d, e, f = _parse_one(ax, ay, az, gx, gy, gz)
+        raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz = _parse_one(ax, ay, az, gx, gy, gz)
     except Exception:
         with stats_lock:
             failed_count += 1
@@ -230,7 +231,7 @@ def record_sensor_movement(ax, ay, az, gx, gy, gz):
 
     with stats_lock:
         callback_count += 1
-    _enqueue_samples([(a, b, c, d, e, f, time.time_ns())])
+    _enqueue_samples([(raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz, time.time_ns(), 0)])
     _log_rates_if_needed()
 
 
@@ -255,14 +256,29 @@ def record_sensor_movement_batch(payload):
         if not row:
             continue
         parts = row.split(",")
-        if len(parts) != 6:
+        if len(parts) not in (6, 7, 8):
             parse_fail += 1
             continue
+
         try:
-            a, b, c, d, e, f = _parse_one(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5])
-            parsed.append((a, b, c, d, e, f, ts + idx))
+            raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz = _parse_one(
+                parts[0],
+                parts[1],
+                parts[2],
+                parts[3],
+                parts[4],
+                parts[5],
+            )
+            if len(parts) >= 7:
+                int(parts[6])
+            hit = 0
+            if len(parts) == 8:
+                hit = 1 if int(parts[7]) != 0 else 0
         except Exception:
             parse_fail += 1
+            continue
+
+        parsed.append((raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz, ts + idx, hit))
 
     if parse_fail:
         with stats_lock:
@@ -292,4 +308,5 @@ try:
     App.run()
 finally:
     stop_event.set()
+
     writer_thread.join(timeout=2.0)

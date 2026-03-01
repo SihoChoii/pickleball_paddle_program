@@ -9,8 +9,17 @@
   <body>
     <main class="container">
 
-      <h1>IMU Dashboard</h1>
-      <p id="status">Waiting for data…</p>
+      <!-- Header row -->
+      <div class="header-row">
+        <div class="header-left">
+          <h1>IMU Dashboard</h1>
+          <p id="status">Waiting for data…</p>
+        </div>
+        <div class="session-controls">
+          <button id="session-btn">Start Session</button>
+          <span id="session-status" class="session-status-text">No session recorded</span>
+        </div>
+      </div>
 
       <!-- Sensor readings -->
       <section class="grid">
@@ -52,12 +61,32 @@
 
       <p class="meta">Last sample: <span id="sample-time">—</span></p>
 
-      <!-- 3D Paddle -->
+      <!-- 3D Paddle + Replay bar -->
       <section class="card paddle-3d-card">
         <h2>Paddle Orientation — 3D View</h2>
         <p class="meta-inline">Accelerometer tilt + integrated gyroscope yaw</p>
         <div class="paddle-canvas-wrap">
           <canvas id="paddle-canvas"></canvas>
+        </div>
+
+        <!-- Replay bar: hidden until session ends -->
+        <div id="replay-bar" class="replay-bar" style="display:none;">
+          <button id="replay-play-btn" class="replay-play-btn">▶</button>
+          <div class="replay-scrubber-wrap">
+            <input id="replay-scrubber" type="range" min="0" max="100" value="0"
+                   class="replay-scrubber" />
+            <div class="replay-meta">
+              <span id="replay-timestamp" class="replay-timestamp">—</span>
+              <div class="replay-right">
+                <select id="replay-speed" class="replay-speed-select">
+                  <option value="fast">Fast (10ms)</option>
+                  <option value="normal" selected>Normal (25ms)</option>
+                  <option value="slow">Slow (100ms)</option>
+                </select>
+                <span id="replay-counter" class="replay-counter">0 / 0</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -77,10 +106,10 @@
         <canvas id="throughput-chart" width="720" height="200"></canvas>
       </section>
 
-      <!-- History -->
+      <!-- History table -->
       <section class="card history-card">
         <div class="history-header">
-          <h2>All IMU Entries</h2>
+          <h2>IMU Entries</h2>
           <span class="row-count-badge"><span id="history-count">0</span> rows</span>
         </div>
         <div class="table-wrap">
